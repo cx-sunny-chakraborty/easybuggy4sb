@@ -4,7 +4,6 @@ on:
     branches:
       - master
   workflow_dispatch:
-
 jobs:
   dast:
     runs-on: ubuntu-latest
@@ -16,13 +15,14 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
       - name: Create Output folder
         run: mkdir ${{ runner.temp }}/output
-
       - name: Change dir owner
         run: sudo chown -R 1000:1000 ${{ runner.temp }}/output
-
+      - name: Fix config file permissions        # ← ADDED HERE
+        run: |
+          chmod 777 ${{ github.workspace }}/dast-config/test_config.yaml
+          chmod 777 ${{ github.workspace }}/dast-config/testfire_auth.js
       - name: Run DAST Scan
         env:
           CX_APIKEY: ${{ secrets.CX_APIKEY }}
@@ -38,11 +38,9 @@ jobs:
           --environment-id=fc8832b1-8029-41f7-8849-b5e0939681c6 \
           --base-url=https://ind.ast.checkmarx.net \
           --output=/tmp
-
       - name: Set permission on output folder
         if: always()
         run: sudo chown -R 1001:1001 ${{ runner.temp }}/output
-
       - name: Upload DAST Output
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         if: always()
