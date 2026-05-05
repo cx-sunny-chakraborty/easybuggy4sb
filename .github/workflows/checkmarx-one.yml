@@ -1,0 +1,51 @@
+name: DAST Scan
+on:
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  dast:
+    runs-on: ubuntu-latest
+    name: DAST Checkmarx On-Prem Scan
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Create Output folder
+        run: mkdir ${{ runner.temp }}/output
+
+      - name: Change dir owner
+        run: sudo chown -R 1000:1000 ${{ runner.temp }}/output
+
+      - name: Run DAST Scan
+        env:
+          CX_APIKEY: "<YOUR_CXONE_API_KEY>"
+        run: |
+          docker run --pull=always \
+          -v ${{ runner.temp }}/output:/tmp \
+          -v ${{ github.workspace }}/dast-config/test_config.yaml:/app/test_config.yaml \
+          -v ${{ github.workspace }}/dast-config/testfire_auth.js:/app/testfire_auth.js \
+          -e CX_APIKEY="$CX_APIKEY" \
+          checkmarx/dast:latest \
+          scan \
+          --config=/app/test_config.yaml \
+          --environment-id=fc8832b1-8029-41f7-8849-b5e0939681c6 \
+          --base-url=https://ast.checkmarx.net \
+          --output=/tmp
+
+      - name: Set permission on output folder
+        if: always()
+        run: sudo chown -R 1001:1001 ${{ runner.temp }}/output
+
+      - name: Upload DAST Output
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        if: always()
+        with:
+          name: dast-output
+          path: ${{ runner.temp }}/output
