@@ -36,7 +36,7 @@ jobs:
           scan \
           --config=/app/test_config.yaml \
           --environment-id=fc8832b1-8029-41f7-8849-b5e0939681c6 \
-          --base-url=https://ast.checkmarx.net \
+          --base-url=https://ind.ast.checkmarx.net \
           --output=/tmp
 
       - name: Set permission on output folder
